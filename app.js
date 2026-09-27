@@ -34,6 +34,11 @@ async function charger() {
     if (!r.ok) throw new Error(`data/catalogue.json : HTTP ${r.status}`);
     c = await r.json();
   }
+  let notices = window.NOTICES;
+  if (!notices) {
+    try { const r = await fetch('data/notices.json', { cache: 'no-cache' }); if (r.ok) notices = await r.json(); } catch (_) { /* notices facultatives */ }
+  }
+  notices = notices || {};
   const themes = arr(c.themes).map(t => ({ ...t, planches: arr(t.planches) }));
   const planches = arr(c.planches).map(p => ({ ...p, insignes: arr(p.insignes) }));
   const insignes = arr(c.insignes).map(i => ({ ...i, variantes: arr(i.variantes) }));
@@ -44,8 +49,10 @@ async function charger() {
     i.themeLib = themeBy.get(i.theme)?.libelle || i.theme;
     i.plancheLib = plBy.get(i.planche)?.libelle || '';
     i.homol = i.homologation ? 'Homologué' : 'Non homologué';
+    const n = notices[i.id] || {};
+    i.txtUnite = n.r || ''; i.txtInsigne = n.i || ''; i.txtComment = n.c || '';
     i._s = norm([i.id, i.libelle, i.unite, i.type, i.fabricant, i.famille, i.homologation, i.variantes.join(' '),
-      i.precision, i.theatre, i.themeLib, i.plancheLib].join(' | '));
+      i.precision, i.theatre, i.themeLib, i.plancheLib, i.txtUnite, i.txtInsigne, i.txtComment].join(' | '));
   }
   // Ordre global = ordre des thèmes puis des planches
   const rang = new Map(); let k = 0;
@@ -146,6 +153,18 @@ function legende() {
   return `<div class="legend"><span>Théâtre :</span>${th.map(t => `<span class="tag theatre" style="--c:${theatreColor(t)}">${esc(t)}</span>`).join('')}
     <span style="margin-left:8px">Fabricant :</span>${fa.map(f => `<span class="tag fab" style="--c:${familyColor(f)}">${esc(f)}</span>`).join('')}
     <span class="tag fab" style="--c:${OTHER}">autres</span></div>`;
+}
+
+// Texte libre -> HTML : lignes commençant par « - » en liste, le reste en paragraphes
+function texte(t) {
+  const out = []; let ul = [];
+  const flush = () => { if (ul.length) { out.push(`<ul>${ul.map(x => `<li>${esc(x)}</li>`).join('')}</ul>`); ul = []; } };
+  for (const l of String(t).split(/\n+/)) {
+    const s = l.trim(); if (!s) continue;
+    const m = s.match(/^[-•*–]\s*(.*)$/);
+    if (m) ul.push(m[1]); else { flush(); out.push(`<p>${esc(s)}</p>`); }
+  }
+  flush(); return out.join('');
 }
 
 // ---------------------------------------------------------------- Vue Accueil
@@ -325,6 +344,9 @@ function ficheHTML(i, modal) {
         ${row('Planche', p ? `<a href="#/planches/${esc(p.id)}">${p.numero != null ? esc(p.numero) + '. ' : ''}${esc(p.libelle)}</a>` : '')}
         ${row("N° d'ordre", esc(i.ordre))}${row('Référence', `<a href="#/insigne/${esc(i.id)}">${esc(i.id)}</a>`)}
       </dl>
+      ${i.txtInsigne ? `<section class="notice"><h2>L'insigne</h2>${texte(i.txtInsigne)}</section>` : ''}
+      ${i.txtComment ? `<section class="notice comment"><h2>Commentaire</h2>${texte(i.txtComment)}</section>` : ''}
+      ${i.txtUnite ? `<details class="notice unite"><summary>Historique de l'unité${i.unite ? ` – ${esc(i.unite)}` : ''}</summary>${texte(i.txtUnite)}</details>` : ''}
       ${memes.length ? `<div class="links">${memes.map(([l, h]) => `<a class="btn" href="${h}">${esc(l)}</a>`).join('')}</div>` : ''}
       <div class="fiche-nav">
         <button class="btn" type="button" data-go="${esc(prev || '')}" ${prev ? '' : 'disabled'}>← Précédent</button>
