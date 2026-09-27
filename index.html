@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Collection d'insignes</title>
+<meta name="description" content="Consultation en ligne d'une collection d'insignes militaires : planches, recherche, filtres et statistiques.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="#/">Collection d'insignes</a>
+  <nav class="nav">
+    <a href="#/" data-nav="accueil">Accueil</a>
+    <a href="#/planches" data-nav="planches">Planches</a>
+    <a href="#/collection" data-nav="collection">Collection</a>
+    <a href="#/stats" data-nav="stats">Statistiques</a>
+  </nav>
+  <form class="search" id="search" role="search">
+    <input type="search" id="q" placeholder="Rechercher : 153° RI, Drago, argent…" aria-label="Rechercher dans la collection">
+  </form>
+  <button class="theme-toggle" id="themeToggle" type="button" aria-label="Basculer clair / sombre" title="Clair / sombre">◐</button>
+</header>
+
+<main id="app" tabindex="-1"><p class="loading">Chargement du catalogue…</p></main>
+
+<dialog id="fiche" aria-labelledby="ficheTitre">
+  <div class="fiche-inner" id="ficheBody"></div>
+</dialog>
+
+<footer class="foot">
+  <span id="footInfo"></span>
+</footer>
+
+<!-- catalogue.js (généré par Preparer-Site.ps1) permet d'ouvrir le site en local sans serveur ; sinon, data/catalogue.json est chargé. -->
+<script src="data/catalogue.js" onerror="void 0"></script>
+<script src="app.js"></script>
+</body>
+</html>
